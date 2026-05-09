@@ -2,7 +2,6 @@ package com.abc_bank.abc_bank.security;
 
 
 import com.abc_bank.abc_bank.auth_users.entity.User;
-import com.abc_bank.abc_bank.role.entity.Role;
 import lombok.Builder;
 import lombok.Data;
 import org.jspecify.annotations.Nullable;
@@ -11,12 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.Arrays.stream;
-import static sun.awt.image.MultiResolutionCachedImage.map;
 
 @Builder
 @Data
