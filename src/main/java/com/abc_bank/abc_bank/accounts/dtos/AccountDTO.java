@@ -35,7 +35,7 @@ public class AccountDTO {
 
     private String accountNumber;
 
-    private BigDecimal BALANCE=BigDecimal.ZERO;
+    private BigDecimal balance=BigDecimal.ZERO;
     private AccountType accountType;
 
     @JsonBackReference

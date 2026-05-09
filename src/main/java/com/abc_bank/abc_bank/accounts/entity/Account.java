@@ -31,7 +31,7 @@ public class Account {
     @Column(nullable=false,unique=true,length=15)
     private String accountNumber;
 
-    private BigDecimal BALANCE=BigDecimal.ZERO;
+    private BigDecimal balance=BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable=false)
