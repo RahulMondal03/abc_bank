@@ -1,0 +1,188 @@
+# abc_bank — Thought Process & Findings
+
+Observations made while exploring the codebase to write the setup
+instructions. These are factual findings tied to specific files, plus
+the reasoning behind why each one matters.
+
+---
+
+## Security Findings
+
+### 1. Real credentials committed to the repository
+
+**Location:** `src/main/resources/application.properties`
+
+| Line | Value |
+|------|-------|
+| `spring.datasource.password` | `Rahul123@` |
+| `spring.mail.password` | `hzvi dvbp lguz mdyj` (looks like a real Gmail app password) |
+| `jwt.secret.string` | `rahul123456789mondal123456789` |
+
+**Why it matters:**
+Anyone with repository access — current or future — has these secrets.
+Git history retains them even after deletion; rotating after the fact
+is the only safe remediation.
+
+**Recommended action:**
+1. Rotate all three secrets immediately at the source (DB user, Gmail app
+   password, regenerate JWT secret).
+2. Move them to environment variables or a secrets manager.
+3. Add `application-local.properties` to `.gitignore` and load secrets
+   from there in development.
+4. Consider `git filter-repo` (or BFG) to scrub the history, then force-
+   push — but only if collaborators are coordinated.
+
+---
+
+### 2. JWT expiry is 30 days
+
+**Location:** `application.properties` — `jwt.expirtation.time=2592000000`
+
+**Why it matters:**
+For a banking application, a 30-day token is a long blast radius if
+stolen. Industry norm for financial apps is:
+
+- Access token: 5–15 minutes
+- Refresh token: 1–7 days, rotated on use
+- A revocation list (Redis) to invalidate compromised tokens instantly
+
+---
+
+### 3. No HTTPS / TLS enforcement visible
+
+**Why it matters:**
+Money-movement endpoints over plaintext are unacceptable in production.
+Spring Security can enforce `requiresChannel().anyRequest().requiresSecure()`,
+plus HSTS headers to prevent downgrade.
+
+---
+
+## Correctness & Code-Quality Findings
+
+### 4. Property name typo
+
+**Location:** `application.properties:16` — `jwt.expirtation.time`
+
+**Why it matters:**
+Cosmetic only, but it will surprise anyone grepping for `expiration`.
+Trivial to rename — just make sure all references in code are updated
+together.
+
+---
+
+### 5. `ddl-auto=update` with no migration tool
+
+**Location:** `application.properties:11` — `spring.jpa.hibernate.ddl-auto=update`
+
+**Why it matters:**
+- Hibernate auto-evolves the schema based on entity changes.
+- There is **no Flyway or Liquibase dependency** in `pom.xml`, so schema
+  changes have no audit trail or rollback path.
+- Banking compliance generally requires versioned, auditable schema
+  changes.
+
+**Recommended action:**
+Add Flyway, write an initial baseline migration, switch to
+`ddl-auto=validate` for non-dev profiles.
+
+---
+
+### 6. Spring Boot 4.0.1 is very new
+
+**Location:** `pom.xml:8`
+
+**Why it matters:**
+The 4.x line is recent. Some libraries (especially older Spring Cloud
+modules, certain Thymeleaf extras, observability agents) may not have
+caught up. Worth verifying the full dependency tree resolves cleanly
+and that your runtime/infra supports it.
+
+---
+
+### 7. Underscore in Java package name
+
+**Location:** package `com.abc_bank.abc_bank`
+
+**Why it matters:**
+Java naming conventions discourage underscores in package names. Most
+tooling tolerates it, but some linters, code generators, and module
+systems (JPMS) don't. Renaming is invasive — file under "future
+refactor" rather than urgent.
+
+---
+
+## Architecture Observations
+
+### 8. Feature-based packaging (positive)
+
+**Location:** `src/main/java/com/abc_bank/abc_bank/{auth_users,notification,security,...}`
+
+Keeping related code (entity + service + repo) inside each feature
+directory is the right call. Layer-based packaging scales poorly as the
+codebase grows.
+
+---
+
+### 9. README is minimal
+
+**Location:** `README.md` (15 lines, description only)
+
+**Why it matters:**
+No setup instructions, no architecture diagram, no contribution guide.
+This is the gap the `instructions.*` and `instructions-detailed.*`
+files now fill — but the README itself could link to them.
+
+---
+
+### 10. Test coverage is essentially zero
+
+**Location:** Only `AbcBankApplicationTests.java` exists under `src/test/`
+
+**Why it matters:**
+That's the default Spring placeholder. For a money-handling app, the
+absence of tests around transactional integrity (concurrent transfers,
+rollback, idempotency) and authorization is a significant risk.
+
+---
+
+### 11. Synchronous SMTP
+
+**Location:** `src/main/java/com/abc_bank/abc_bank/notification/services/NotificationServiceImpl.java`
+
+**Why it matters:**
+If notifications are sent inside service methods that also handle
+transfers, a slow mail server can block (or fail) a money operation.
+Options:
+- Spring `@Async` + a dedicated executor
+- Publish a domain event and consume it asynchronously
+- A real broker (RabbitMQ, Kafka) for at-least-once delivery
+
+---
+
+### 12. README claims vs. observed code
+
+| README claim | Observed in code |
+|--------------|------------------|
+| React SPA frontend | No `frontend/` directory in repo |
+| CI/CD via GitHub Actions | No `.github/workflows/` directory |
+| AWS S3 integration | Dependency present in `pom.xml`, wiring not fully audited |
+| Docker containerization | No `Dockerfile` or `docker-compose.yml` |
+
+**Why it matters:**
+The README oversells current state. Either the features are planned
+(rewrite as "Roadmap") or they live in a different repo (link to it).
+
+---
+
+## Priority Ranking
+
+If only one thing is addressed today:
+
+1. **Rotate the committed credentials.** Everything else can wait.
+2. Replace `ddl-auto=update` + add Flyway.
+3. Shorten JWT expiry, add refresh tokens.
+4. Add tests around transaction integrity.
+5. Enforce HTTPS.
+6. Make notifications asynchronous.
+
+The rest (typos, package naming, README polish) are housekeeping.
