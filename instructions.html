@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abc_bank - Setup &amp; Usage Instructions</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            line-height: 1.6;
+            color: #1f2328;
+            background-color: #ffffff;
+        }
+        h1 {
+            border-bottom: 2px solid #d0d7de;
+            padding-bottom: 0.4rem;
+            color: #0969da;
+        }
+        h2 {
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 0.3rem;
+            margin-top: 2rem;
+            color: #0969da;
+        }
+        h3 {
+            margin-top: 1.5rem;
+        }
+        code {
+            background-color: #f6f8fa;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #d0d7de;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1rem 0;
+        }
+        th, td {
+            border: 1px solid #d0d7de;
+            padding: 0.5rem 0.8rem;
+            text-align: left;
+        }
+        th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+        }
+        .note {
+            background-color: #ddf4ff;
+            border-left: 4px solid #0969da;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .warning {
+            background-color: #fff8c5;
+            border-left: 4px solid #d4a72c;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        ul, ol {
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.3rem;
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>abc_bank &mdash; Setup &amp; Usage Instructions</h1>
+    <p>
+        <strong>abc_bank</strong> is a full-stack FinTech banking application built with a
+        <strong>Spring Boot</strong> backend and a <strong>React</strong> single-page client.
+        It supports core banking operations such as deposit, withdrawal, and fund transfers,
+        with JWT-based authentication, role-based access control, and SMTP notifications.
+    </p>
+
+    <h2>1. Prerequisites</h2>
+    <p>Before running the project, install the following:</p>
+    <table>
+        <thead>
+            <tr><th>Tool</th><th>Version</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Java JDK</td><td>21 or higher</td><td>Compile &amp; run the Spring Boot backend</td></tr>
+            <tr><td>Maven</td><td>3.8+ (or use the bundled <code>mvnw</code>)</td><td>Build &amp; dependency management</td></tr>
+            <tr><td>MySQL</td><td>8.0+</td><td>Application database</td></tr>
+            <tr><td>Git</td><td>Latest</td><td>Source control</td></tr>
+        </tbody>
+    </table>
+
+    <h2>2. Clone the Repository</h2>
+    <pre><code>git clone https://github.com/RahulMondal03/abc_bank.git
+cd abc_bank</code></pre>
+
+    <h2>3. Database Setup</h2>
+    <ol>
+        <li>Start your MySQL server.</li>
+        <li>Create the application database:
+            <pre><code>CREATE DATABASE bank;</code></pre>
+        </li>
+        <li>
+            By default, the application connects with username <code>root</code>. Update credentials in
+            <code>src/main/resources/application.properties</code> if your local setup differs.
+        </li>
+    </ol>
+
+    <div class="warning">
+        <strong>Security Note:</strong> Do not commit real credentials, JWT secrets, or mail
+        passwords. Use environment variables or a local secrets file for production deployments.
+    </div>
+
+    <h2>4. Configure Application Properties</h2>
+    <p>Open <code>src/main/resources/application.properties</code> and verify the following settings:</p>
+    <pre><code>server.port=8090
+
+# MySQL
+spring.datasource.url=jdbc:mysql://localhost:3306/bank
+spring.datasource.username=YOUR_DB_USERNAME
+spring.datasource.password=YOUR_DB_PASSWORD
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+
+# JWT
+jwt.secret.string=YOUR_JWT_SECRET
+jwt.expirtation.time=2592000000
+
+# Mail (SMTP)
+spring.mail.username=YOUR_SMTP_USERNAME
+spring.mail.password=YOUR_SMTP_APP_PASSWORD
+spring.mail.host=smtp.gmail.com
+spring.mail.port=587</code></pre>
+
+    <h2>5. Build the Project</h2>
+    <p>Use the bundled Maven wrapper:</p>
+    <pre><code># Linux / macOS
+./mvnw clean install
+
+# Windows
+mvnw.cmd clean install</code></pre>
+
+    <h2>6. Run the Application</h2>
+    <pre><code># Linux / macOS
+./mvnw spring-boot:run
+
+# Windows
+mvnw.cmd spring-boot:run</code></pre>
+    <p>
+        Once started, the API is available at
+        <a href="http://localhost:8090">http://localhost:8090</a>.
+    </p>
+
+    <h2>7. Run Tests</h2>
+    <pre><code>./mvnw test</code></pre>
+
+    <h2>8. Project Structure</h2>
+    <pre><code>abc_bank/
+├── pom.xml                          # Maven build configuration
+├── mvnw, mvnw.cmd                   # Maven wrapper scripts
+└── src/
+    ├── main/
+    │   ├── java/com/abc_bank/abc_bank/
+    │   │   ├── AbcBankApplication.java   # App entry point
+    │   │   ├── config/                   # App configuration
+    │   │   ├── security/                 # JWT, filters, auth
+    │   │   ├── auth_users/               # User entity &amp; auth
+    │   │   ├── notification/             # SMTP / notifications
+    │   │   ├── exceptions/               # Custom exceptions
+    │   │   ├── enums/                    # Account, Transaction enums
+    │   │   └── res/                      # Response wrappers
+    │   └── resources/
+    │       └── application.properties
+    └── test/                             # JUnit test sources</code></pre>
+
+    <h2>9. Key Features</h2>
+    <ul>
+        <li>Account management (deposit, withdrawal, transfer)</li>
+        <li>JWT-based authentication &amp; role-based access control</li>
+        <li>Global exception handling with custom error responses</li>
+        <li>SMTP email notifications for transactional events</li>
+        <li>AWS S3 integration for file storage</li>
+        <li>Spring Boot Actuator for monitoring</li>
+    </ul>
+
+    <h2>10. Common Issues</h2>
+    <table>
+        <thead>
+            <tr><th>Issue</th><th>Solution</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Port 8090 already in use</td>
+                <td>Change <code>server.port</code> in <code>application.properties</code></td>
+            </tr>
+            <tr>
+                <td>MySQL connection refused</td>
+                <td>Verify MySQL is running and credentials match the config</td>
+            </tr>
+            <tr>
+                <td>JWT signature errors</td>
+                <td>Ensure <code>jwt.secret.string</code> is at least 32 characters</td>
+            </tr>
+            <tr>
+                <td>SMTP authentication failure</td>
+                <td>Use an app-specific password (Gmail requires 2FA + app password)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="note">
+        <strong>Tip:</strong> For development, set <code>spring.jpa.show-sql=true</code> in
+        <code>application.properties</code> to see generated SQL queries in the console.
+    </div>
+
+    <h2>11. License</h2>
+    <p>See repository for license details.</p>
+</body>
+</html>
