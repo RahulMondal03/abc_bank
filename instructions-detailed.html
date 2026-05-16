@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abc_bank - Detailed Instructions with Thought Process</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            line-height: 1.65;
+            color: #1f2328;
+            background-color: #ffffff;
+        }
+        h1 {
+            border-bottom: 2px solid #d0d7de;
+            padding-bottom: 0.4rem;
+            color: #0969da;
+        }
+        h2 {
+            border-bottom: 1px solid #d0d7de;
+            padding-bottom: 0.3rem;
+            margin-top: 2.2rem;
+            color: #0969da;
+        }
+        h3 {
+            margin-top: 1.4rem;
+            color: #1f2328;
+        }
+        code {
+            background-color: #f6f8fa;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f6f8fa;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #d0d7de;
+        }
+        pre code { background: none; padding: 0; }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+        th, td {
+            border: 1px solid #d0d7de;
+            padding: 0.5rem 0.8rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background-color: #f6f8fa; font-weight: 600; }
+        .think {
+            background-color: #f0f7ff;
+            border-left: 4px solid #0969da;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .think strong { color: #0969da; }
+        .warn {
+            background-color: #fff8c5;
+            border-left: 4px solid #d4a72c;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .tradeoff {
+            background-color: #fbefff;
+            border-left: 4px solid #8250df;
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .tradeoff strong { color: #8250df; }
+        ul, ol { padding-left: 1.5rem; }
+        li { margin-bottom: 0.3rem; }
+        .checklist { list-style: none; padding-left: 0; }
+        .checklist li::before { content: "☐  "; color: #57606a; }
+    </style>
+</head>
+<body>
+    <h1>abc_bank &mdash; Detailed Instructions with Thought Process</h1>
+    <p>
+        This guide expands on the basic setup with the <strong>reasoning</strong> behind each step,
+        the <strong>trade-offs</strong> considered, and the <strong>design decisions</strong> baked
+        into the abc_bank project. Use it as a learning reference, not just a runbook.
+    </p>
+
+    <h2>1. Prerequisites &mdash; Why These Specific Tools?</h2>
+    <table>
+        <thead>
+            <tr><th>Tool</th><th>Why this choice</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Java JDK 21</td>
+                <td>LTS release with virtual threads (Project Loom), pattern matching, and record patterns &mdash; relevant for high-throughput banking workloads. Spring Boot 4.x requires Java 17+, so 21 future-proofs the project.</td>
+            </tr>
+            <tr>
+                <td>Maven 3.8+</td>
+                <td>Declarative, integrates cleanly with Spring. The wrapper (<code>mvnw</code>) is bundled so contributors don't need a system Maven install &mdash; avoids "works on my machine" version drift.</td>
+            </tr>
+            <tr>
+                <td>MySQL 8.0+</td>
+                <td>Chosen for familiarity and broad hosting support. The <em>real</em> requirement is ACID compliance and row-level locking, both of which InnoDB satisfies.</td>
+            </tr>
+            <tr>
+                <td>Git</td>
+                <td>Required for branch-based workflow and CI/CD triggers.</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="think">
+        <strong>Thought process:</strong> The stack favors <em>maturity over novelty</em>.
+        Banking apps prioritize correctness, auditability, and operational tooling
+        &mdash; all areas where this stack is battle-tested.
+    </div>
+
+    <h2>2. Cloning &mdash; Branch Strategy</h2>
+    <pre><code>git clone https://github.com/RahulMondal03/abc_bank.git
+cd abc_bank</code></pre>
+    <p>
+        <strong>Why a single repo (monorepo-lite)?</strong>
+        The backend lives here while the React frontend may live elsewhere.
+        Keeping the Spring Boot service isolated lets backend CI run independently
+        &mdash; faster feedback, smaller blast radius on deploys.
+    </p>
+
+    <h2>3. Database Setup &mdash; Design Decisions</h2>
+    <pre><code>CREATE DATABASE bank;</code></pre>
+    <h3>Why <code>ddl-auto=update</code> in dev?</h3>
+    <p>
+        <code>spring.jpa.hibernate.ddl-auto=update</code> lets Hibernate evolve the
+        schema as entities change. <strong>Convenient in dev</strong>,
+        <strong>dangerous in prod</strong> because:
+    </p>
+    <ul>
+        <li>It can silently drop or alter columns based on entity changes.</li>
+        <li>It bypasses migration history &mdash; no rollback story.</li>
+    </ul>
+    <div class="warn">
+        <strong>Production recommendation:</strong> switch to <code>validate</code>
+        and use <strong>Flyway</strong> or <strong>Liquibase</strong> for explicit,
+        versioned migrations. Banking compliance typically requires a full audit
+        trail of schema changes.
+    </div>
+
+    <h3>Why MySQL InnoDB specifically?</h3>
+    <ul>
+        <li>Row-level locking &rarr; concurrent transfers don't block each other unnecessarily.</li>
+        <li>Foreign-key enforcement &rarr; referential integrity for <code>User &rarr; Account &rarr; Transaction</code>.</li>
+        <li>DML transactions are ACID &mdash; critical for money movement.</li>
+    </ul>
+
+    <h2>4. Application Properties &mdash; Security Thought Process</h2>
+    <p>
+        The default <code>application.properties</code> contains plaintext
+        credentials for convenience. In production this is a critical vulnerability.
+    </p>
+    <h3>Layered approach to secrets</h3>
+    <table>
+        <thead>
+            <tr><th>Environment</th><th>Where secrets live</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Local dev</td><td><code>application-local.properties</code> (gitignored)</td></tr>
+            <tr><td>CI</td><td>GitHub Actions encrypted secrets</td></tr>
+            <tr><td>Staging / Prod</td><td>AWS Secrets Manager / Parameter Store, injected as env vars</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Why externalize?</strong></p>
+    <ol>
+        <li><strong>Rotation</strong> &mdash; secrets can be rotated without rebuilding the JAR.</li>
+        <li><strong>Least privilege</strong> &mdash; devs don't see prod credentials.</li>
+        <li><strong>Audit</strong> &mdash; secret access is logged separately.</li>
+    </ol>
+
+    <h3>JWT secret sizing</h3>
+    <pre><code>jwt.secret.string=YOUR_JWT_SECRET   # MUST be ≥32 chars for HS256
+jwt.expirtation.time=2592000000     # 30 days in ms</code></pre>
+    <div class="tradeoff">
+        <strong>Trade-off:</strong> a 30-day token simplifies UX but
+        <em>expands the blast radius</em> if a token is stolen. For banking, consider:
+        <ul>
+            <li>Short access tokens (15 min) + refresh tokens (7 days)</li>
+            <li>Token revocation list (Redis) for instant logout</li>
+            <li>Device fingerprinting to detect stolen tokens</li>
+        </ul>
+    </div>
+
+    <h2>5. Build &mdash; Why Use the Wrapper?</h2>
+    <pre><code>./mvnw clean install</code></pre>
+    <p><strong><code>clean install</code> thought process:</strong></p>
+    <ul>
+        <li><code>clean</code> removes <code>target/</code> to avoid stale class files (a real source of bugs after refactors).</li>
+        <li><code>install</code> runs tests <em>and</em> installs the artifact to the local <code>~/.m2</code> repository &mdash; useful if other local projects depend on this one.</li>
+    </ul>
+    <div class="warn">
+        <strong>CI shortcut:</strong> use <code>./mvnw -DskipTests package</code>
+        only when you've <em>already</em> verified tests pass in a separate step.
+        Skipping tests during release builds is a classic source of regressions.
+    </div>
+
+    <h2>6. Run &mdash; Profile-Driven Configuration</h2>
+    <pre><code>./mvnw spring-boot:run</code></pre>
+    <p><strong>Why Spring profiles matter:</strong></p>
+    <pre><code>./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod</code></pre>
+    <p>This lets you swap DB URLs, log levels, and SMTP settings without code changes.</p>
+
+    <h2>7. Tests &mdash; What to Cover</h2>
+    <pre><code>./mvnw test</code></pre>
+    <p><strong>Banking test priorities (in order):</strong></p>
+    <ol>
+        <li><strong>Transaction integrity</strong> &mdash; money never disappears or duplicates. Test concurrent transfers, rollback on failure, idempotency keys.</li>
+        <li><strong>Authorization</strong> &mdash; every endpoint enforces role checks; tested with <code>@WithMockUser</code> and forged JWTs.</li>
+        <li><strong>Input validation</strong> &mdash; negative amounts, overflow, currency mismatches.</li>
+        <li><strong>Audit logging</strong> &mdash; every state-changing operation produces an immutable log.</li>
+    </ol>
+    <div class="think">
+        <strong>Coverage is not correctness.</strong> 100% line coverage with weak
+        assertions is worse than 60% coverage with strong invariants. Use mutation
+        testing (PIT) to measure assertion quality.
+    </div>
+
+    <h2>8. Project Structure &mdash; Why This Layout?</h2>
+    <pre><code>src/main/java/com/abc_bank/abc_bank/
+├── AbcBankApplication.java
+├── config/         # Cross-cutting beans
+├── security/       # Auth filters, JWT, CORS
+├── auth_users/     # User domain
+├── notification/   # SMTP / event-driven notifications
+├── exceptions/     # Custom exception types + global handler
+├── enums/          # Shared enums
+└── res/            # Response wrappers</code></pre>
+    <p>
+        <strong>Why feature-based (not layer-based) packaging?</strong>
+        A layer-based layout (<code>controllers/</code>, <code>services/</code>,
+        <code>repositories/</code>) <em>scales poorly</em>: every feature touches
+        every package, making PRs sprawl. Feature-based packaging keeps related
+        code together and makes it easier to extract modules later.
+    </p>
+    <p>
+        <strong>Why a separate <code>enums/</code> package?</strong>
+        Enums are shared across features (a transaction has a
+        <code>TransactionType</code>, a notification references an
+        <code>AccountType</code>). Putting them in a shared package avoids
+        circular dependencies between feature modules.
+    </p>
+
+    <h2>9. Key Features &mdash; Design Rationale</h2>
+    <h3>JWT vs. Session Cookies</h3>
+    <ul>
+        <li><strong>JWT chosen</strong> because the React SPA lives on a different origin &mdash; stateless tokens work better than cookies + CSRF tokens.</li>
+        <li><strong>Trade-off:</strong> JWTs can't be revoked without a denylist. Mitigation: short expiry + refresh tokens.</li>
+    </ul>
+    <h3>Global Exception Handler</h3>
+    <ul>
+        <li>Centralizes error responses &rarr; consistent JSON shape for the frontend.</li>
+        <li>Hides internal stack traces from clients (security: avoid information leakage).</li>
+    </ul>
+    <h3>SMTP Notifications</h3>
+    <ul>
+        <li><strong>Synchronous SMTP in service methods is risky</strong> &mdash; a slow mail server can block a transfer.</li>
+        <li>Future improvement: publish a domain event, consume asynchronously (<code>@Async</code> or a real message broker).</li>
+    </ul>
+    <h3>AWS S3 Integration</h3>
+    <ul>
+        <li>Used for documents (e.g., KYC uploads).</li>
+        <li>S3 chosen for 11-nines durability, server-side encryption (SSE-KMS), and lifecycle policies for compliance retention.</li>
+    </ul>
+
+    <h2>10. Common Issues &mdash; Root-Cause Lens</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Symptom</th>
+                <th>Surface fix</th>
+                <th>Root cause to investigate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Port 8090 in use</td>
+                <td>Change port</td>
+                <td>A previous instance didn't shut down &mdash; check the process tree.</td>
+            </tr>
+            <tr>
+                <td>MySQL connection refused</td>
+                <td>Restart MySQL</td>
+                <td>Connection pool exhausted? Check <code>maxActive</code>.</td>
+            </tr>
+            <tr>
+                <td>JWT signature errors</td>
+                <td>Regenerate secret</td>
+                <td>Secret rotated mid-deploy without a grace period.</td>
+            </tr>
+            <tr>
+                <td>SMTP auth failure</td>
+                <td>Use app password</td>
+                <td>Don't store passwords in repo &mdash; use OAuth2 for Gmail.</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="think">
+        <strong>Debugging thought process:</strong> when something fails, ask
+        <em>"what changed?"</em> first (deploy, config, dependency), then
+        <em>"what's the actual error?"</em> (full stack trace, not just the
+        message), then <em>"what's the simplest reproduction?"</em>
+    </div>
+
+    <h2>11. Production Readiness Checklist</h2>
+    <p>Before deploying anything money-handling:</p>
+    <ul class="checklist">
+        <li>Secrets externalized (no plaintext in repo)</li>
+        <li>HTTPS enforced (HSTS header, redirect from HTTP)</li>
+        <li>Rate limiting on auth endpoints (prevent credential stuffing)</li>
+        <li>Database backups verified by restore drill</li>
+        <li>Audit log immutable and retained per regulation (e.g., 7 years)</li>
+        <li>Monitoring: latency, error rate, saturation (Actuator + Prometheus)</li>
+        <li>Alerting on: failed transfers, auth anomalies, unusual transaction volumes</li>
+        <li>Disaster recovery RTO/RPO defined and tested</li>
+        <li>Penetration test completed and findings remediated</li>
+    </ul>
+
+    <h2>12. License</h2>
+    <p>See repository for license details.</p>
+</body>
+</html>
