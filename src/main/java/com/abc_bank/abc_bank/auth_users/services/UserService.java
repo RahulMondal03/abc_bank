@@ -9,6 +9,7 @@ import com.abc_bank.abc_bank.auth_users.dtos.UserDTO;
 import com.abc_bank.abc_bank.auth_users.dtos.VerifyOtpRequest;
 import com.abc_bank.abc_bank.auth_users.entity.User;
 import com.abc_bank.abc_bank.res.Response;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -25,6 +26,8 @@ public interface UserService {
     Response<UserDTO> getUserById(Long id);
 
     Response<?> updatePassword(UpdatePasswordRequest request);
+
+    Response<UserDTO> updateProfilePicture(MultipartFile file);
 
     Response<?> requestPasswordReset(String email);
 

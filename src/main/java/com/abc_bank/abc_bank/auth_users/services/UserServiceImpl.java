@@ -20,6 +20,7 @@ import com.abc_bank.abc_bank.res.Response;
 import com.abc_bank.abc_bank.role.entity.Role;
 import com.abc_bank.abc_bank.role.repo.RoleRepo;
 import com.abc_bank.abc_bank.security.TokenService;
+import com.abc_bank.abc_bank.storage.FileStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class UserServiceImpl implements UserService {
     private final TokenService tokenService;
     private final NotificationService notificationService;
     private final OtpService otpService;
+    private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -198,6 +201,24 @@ public class UserServiceImpl implements UserService {
         return Response.builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("password updated successfully")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public Response<UserDTO> updateProfilePicture(MultipartFile file) {
+        User user = getCurrentUserEntity();
+
+        String url = fileStorageService.upload(file, "profile-pictures/" + user.getId());
+
+        user.setProfilePictureUrl(url);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepo.save(user);
+
+        return Response.<UserDTO>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("profile picture updated")
+                .data(toDto(user))
                 .build();
     }
 
