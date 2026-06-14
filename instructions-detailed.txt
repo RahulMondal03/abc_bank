@@ -1,0 +1,260 @@
+================================================================================
+abc_bank - Detailed Instructions with Thought Process
+================================================================================
+
+This guide expands on the basic setup with the REASONING behind each step,
+the TRADE-OFFS considered, and the DESIGN DECISIONS baked into abc_bank.
+Use this as a learning reference, not just a runbook.
+
+
+--------------------------------------------------------------------------------
+1. PREREQUISITES - WHY THESE SPECIFIC TOOLS?
+--------------------------------------------------------------------------------
+
+  Java JDK 21
+    Java 21 is an LTS release with virtual threads (Project Loom), pattern
+    matching, and record patterns - relevant for high-throughput banking
+    workloads. Spring Boot 4.x requires Java 17+, so 21 future-proofs.
+
+  Maven 3.8+ (or the bundled mvnw)
+    Maven is declarative and integrates cleanly with Spring. The wrapper is
+    bundled so contributors don't need a system Maven install - avoids
+    "works on my machine" version drift.
+
+  MySQL 8.0+
+    Chosen for familiarity and broad hosting support. The REAL requirement
+    is ACID compliance and row-level locking, both of which InnoDB
+    satisfies.
+
+  Git (latest)
+    Required for branch-based workflow and CI/CD triggers.
+
+  Thought process: the stack favors MATURITY over NOVELTY. Banking apps
+  prioritize correctness, auditability, and operational tooling - all areas
+  where this stack is battle-tested.
+
+
+--------------------------------------------------------------------------------
+2. CLONING - BRANCH STRATEGY
+--------------------------------------------------------------------------------
+
+    git clone https://github.com/RahulMondal03/abc_bank.git
+    cd abc_bank
+
+  Why a single repo (monorepo-lite)?
+    The backend lives here while the React frontend may live elsewhere.
+    Keeping the Spring Boot service isolated lets backend CI run
+    independently - faster feedback, smaller blast radius on deploys.
+
+
+--------------------------------------------------------------------------------
+3. DATABASE SETUP - DESIGN DECISIONS
+--------------------------------------------------------------------------------
+
+    CREATE DATABASE bank;
+
+  Why ddl-auto=update in dev?
+    spring.jpa.hibernate.ddl-auto=update lets Hibernate evolve the schema
+    as entities change. CONVENIENT IN DEV, DANGEROUS IN PROD because:
+      - It can silently drop or alter columns based on entity changes.
+      - It bypasses migration history - no rollback story.
+
+  Production recommendation:
+    Switch to "validate" and use Flyway or Liquibase for explicit,
+    versioned migrations. Banking compliance typically requires a full
+    audit trail of schema changes.
+
+  Why MySQL InnoDB specifically?
+    - Row-level locking: concurrent transfers don't block each other.
+    - Foreign key enforcement: referential integrity across
+      User -> Account -> Transaction.
+    - DML transactions are ACID - critical for money movement.
+
+
+--------------------------------------------------------------------------------
+4. APPLICATION PROPERTIES - SECURITY THOUGHT PROCESS
+--------------------------------------------------------------------------------
+
+  The default application.properties contains PLAINTEXT credentials for
+  convenience. In production, this is a critical vulnerability.
+
+  Layered approach to secrets:
+    Local dev    -> application-local.properties (gitignored)
+    CI           -> GitHub Actions encrypted secrets
+    Staging/Prod -> AWS Secrets Manager / Parameter Store as env vars
+
+  Why externalize?
+    1. Rotation: secrets can be rotated without rebuilding the JAR.
+    2. Least privilege: devs don't see prod credentials.
+    3. Audit: secret access is logged separately.
+
+  JWT secret sizing:
+    jwt.secret.string=YOUR_JWT_SECRET   # MUST be >=32 chars for HS256
+    jwt.expirtation.time=2592000000     # 30 days in ms
+
+  Trade-off:
+    A 30-day token simplifies UX but EXPANDS THE BLAST RADIUS if stolen.
+    For banking, consider:
+      - Short access tokens (15 min) + refresh tokens (7 days)
+      - Token revocation list (Redis) for instant logout
+      - Device fingerprinting to detect stolen tokens
+
+
+--------------------------------------------------------------------------------
+5. BUILD - WHY USE THE WRAPPER?
+--------------------------------------------------------------------------------
+
+    ./mvnw clean install
+
+  "clean install" thought process:
+    - "clean" removes target/ to avoid stale class files (a real source
+      of bugs after refactors).
+    - "install" runs tests AND installs the artifact to ~/.m2 - useful
+      if other local projects depend on this one.
+
+  CI shortcut:
+    Use ./mvnw -DskipTests package only when you've ALREADY verified
+    tests in a separate step. Skipping tests during release builds is
+    a classic source of regressions.
+
+
+--------------------------------------------------------------------------------
+6. RUN - PROFILE-DRIVEN CONFIGURATION
+--------------------------------------------------------------------------------
+
+    ./mvnw spring-boot:run
+
+  Why Spring profiles matter:
+    Spring Boot supports application-{profile}.properties. Run with:
+
+      ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+      ./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
+
+    This lets you swap DB URLs, log levels, and SMTP settings without
+    code changes.
+
+
+--------------------------------------------------------------------------------
+7. TESTS - WHAT TO COVER
+--------------------------------------------------------------------------------
+
+    ./mvnw test
+
+  Banking test priorities (in order):
+    1. Transaction integrity - money never disappears or duplicates.
+       Test concurrent transfers, rollback on failure, idempotency keys.
+    2. Authorization - every endpoint enforces role checks; tested
+       with @WithMockUser and forged JWTs.
+    3. Input validation - negative amounts, overflow, currency mismatch.
+    4. Audit logging - every state-changing operation produces an
+       immutable log.
+
+  Coverage is NOT correctness.
+    100% line coverage with weak assertions is worse than 60% coverage
+    with strong invariants. Use mutation testing (PIT) to measure
+    assertion quality.
+
+
+--------------------------------------------------------------------------------
+8. PROJECT STRUCTURE - WHY THIS LAYOUT?
+--------------------------------------------------------------------------------
+
+    src/main/java/com/abc_bank/abc_bank/
+    |-- AbcBankApplication.java
+    |-- config/         # Cross-cutting beans
+    |-- security/       # Auth filters, JWT, CORS
+    |-- auth_users/     # User domain
+    |-- notification/   # SMTP / event-driven notifications
+    |-- exceptions/     # Custom exception types + global handler
+    |-- enums/          # Shared enums
+    `-- res/            # Response wrappers
+
+  Why feature-based (not layer-based) packaging?
+    A layer-based layout (controllers/, services/, repositories/) scales
+    POORLY: every feature touches every package, making PRs sprawl.
+    Feature-based packaging keeps related code together and makes it
+    easier to extract modules later.
+
+  Why a separate enums/ package?
+    Enums are shared across features (a transaction has a
+    TransactionType, a notification references an AccountType). Putting
+    them in a shared package avoids circular dependencies between
+    feature modules.
+
+
+--------------------------------------------------------------------------------
+9. KEY FEATURES - DESIGN RATIONALE
+--------------------------------------------------------------------------------
+
+  JWT vs. Session Cookies
+    JWT chosen because the frontend is a React SPA on a different origin
+    - stateless tokens work better than cookies + CSRF tokens.
+    Trade-off: JWTs can't be revoked without a denylist. Mitigation:
+    short expiry + refresh tokens.
+
+  Global Exception Handler
+    Centralizes error responses -> consistent JSON shape for the
+    frontend. Hides internal stack traces from clients (security: avoid
+    information leakage).
+
+  SMTP Notifications
+    Synchronous SMTP in service methods is RISKY - a slow mail server
+    can block a transfer. Future improvement: publish a domain event
+    and consume asynchronously (Spring @Async or a real message broker).
+
+  AWS S3 Integration
+    Used for documents (e.g., KYC uploads). S3 chosen for:
+      - 11-nines durability
+      - Server-side encryption (SSE-KMS)
+      - Lifecycle policies for compliance retention
+
+
+--------------------------------------------------------------------------------
+10. COMMON ISSUES - ROOT-CAUSE LENS
+--------------------------------------------------------------------------------
+
+  Symptom: Port 8090 in use
+    Surface fix:  Change port
+    Root cause:   A previous instance didn't shut down - check process
+                  tree.
+
+  Symptom: MySQL connection refused
+    Surface fix:  Restart MySQL
+    Root cause:   Connection pool exhausted? Check maxActive.
+
+  Symptom: JWT signature errors
+    Surface fix:  Regenerate secret
+    Root cause:   Secret rotated mid-deploy without grace period.
+
+  Symptom: SMTP auth failure
+    Surface fix:  Use app password
+    Root cause:   Don't store passwords in repo - use OAuth2 for Gmail.
+
+  Debugging thought process:
+    When something fails, ask "what changed?" first (deploy, config,
+    dependency), then "what's the actual error?" (full stack trace, not
+    just the message), then "what's the simplest reproduction?".
+
+
+--------------------------------------------------------------------------------
+11. PRODUCTION READINESS CHECKLIST
+--------------------------------------------------------------------------------
+
+  Before deploying anything money-handling:
+    [ ] Secrets externalized (no plaintext in repo)
+    [ ] HTTPS enforced (HSTS header, redirect from HTTP)
+    [ ] Rate limiting on auth endpoints (prevent credential stuffing)
+    [ ] Database backups verified by restore drill
+    [ ] Audit log immutable and retained per regulation (e.g., 7 years)
+    [ ] Monitoring: latency, error rate, saturation
+        (Actuator + Prometheus)
+    [ ] Alerting on: failed transfers, auth anomalies, unusual volumes
+    [ ] Disaster recovery RTO/RPO defined and tested
+    [ ] Penetration test completed and findings remediated
+
+
+--------------------------------------------------------------------------------
+12. LICENSE
+--------------------------------------------------------------------------------
+
+See repository for license details.
