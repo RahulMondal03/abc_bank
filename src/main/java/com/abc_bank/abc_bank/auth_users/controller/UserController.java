@@ -6,6 +6,7 @@ import com.abc_bank.abc_bank.auth_users.services.UserService;
 import com.abc_bank.abc_bank.res.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -30,6 +33,11 @@ public class UserController {
     @PutMapping("/password")
     public ResponseEntity<Response<?>> updatePassword(@Valid @RequestBody UpdatePasswordRequest request) {
         return ResponseEntity.ok(userService.updatePassword(request));
+    }
+
+    @PutMapping(value = "/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Response<UserDTO>> updateProfilePicture(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.updateProfilePicture(file));
     }
 
     @GetMapping("/{id}")

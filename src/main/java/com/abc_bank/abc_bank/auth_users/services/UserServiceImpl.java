@@ -6,6 +6,7 @@ import com.abc_bank.abc_bank.auth_users.dtos.RegistrationRequest;
 import com.abc_bank.abc_bank.auth_users.dtos.ResetPasswordRequest;
 import com.abc_bank.abc_bank.auth_users.dtos.UpdatePasswordRequest;
 import com.abc_bank.abc_bank.auth_users.dtos.UserDTO;
+import com.abc_bank.abc_bank.auth_users.dtos.VerifyOtpRequest;
 import com.abc_bank.abc_bank.auth_users.entity.PasswordResetCode;
 import com.abc_bank.abc_bank.auth_users.entity.User;
 import com.abc_bank.abc_bank.auth_users.repo.PasswordResetCodeRepo;
@@ -19,6 +20,7 @@ import com.abc_bank.abc_bank.res.Response;
 import com.abc_bank.abc_bank.role.entity.Role;
 import com.abc_bank.abc_bank.role.repo.RoleRepo;
 import com.abc_bank.abc_bank.security.TokenService;
+import com.abc_bank.abc_bank.storage.FileStorageService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -53,6 +56,8 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final NotificationService notificationService;
+    private final OtpService otpService;
+    private final FileStorageService fileStorageService;
     private final ModelMapper modelMapper;
 
     @Override
@@ -101,6 +106,31 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("account is deactivated");
         }
 
+        // Password verified. Second factor required: email a one-time code and
+        // return a challenge instead of a JWT. The JWT is only issued once the
+        // code is confirmed via verifyLoginOtp.
+        String challengeId = otpService.issueOtp(user);
+
+        LoginResponse loginResponse = LoginResponse.builder()
+                .mfaRequired(true)
+                .challengeId(challengeId)
+                .build();
+
+        return Response.<LoginResponse>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("verification code sent to your email")
+                .data(loginResponse)
+                .build();
+    }
+
+    @Override
+    public Response<LoginResponse> verifyLoginOtp(VerifyOtpRequest request) {
+        User user = otpService.verifyOtp(request.getChallengeId(), request.getCode());
+
+        if (!user.isActive()) {
+            throw new BadRequestException("account is deactivated");
+        }
+
         String token = tokenService.generateToken(user.getEmail());
         List<String> roleNames = user.getRoles() == null
                 ? List.of()
@@ -114,6 +144,22 @@ public class UserServiceImpl implements UserService {
         return Response.<LoginResponse>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("login successful")
+                .data(loginResponse)
+                .build();
+    }
+
+    @Override
+    public Response<LoginResponse> resendLoginOtp(String challengeId) {
+        String newChallengeId = otpService.resendOtp(challengeId);
+
+        LoginResponse loginResponse = LoginResponse.builder()
+                .mfaRequired(true)
+                .challengeId(newChallengeId)
+                .build();
+
+        return Response.<LoginResponse>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("verification code resent to your email")
                 .data(loginResponse)
                 .build();
     }
@@ -155,6 +201,24 @@ public class UserServiceImpl implements UserService {
         return Response.builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("password updated successfully")
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public Response<UserDTO> updateProfilePicture(MultipartFile file) {
+        User user = getCurrentUserEntity();
+
+        String url = fileStorageService.upload(file, "profile-pictures/" + user.getId());
+
+        user.setProfilePictureUrl(url);
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepo.save(user);
+
+        return Response.<UserDTO>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("profile picture updated")
+                .data(toDto(user))
                 .build();
     }
 

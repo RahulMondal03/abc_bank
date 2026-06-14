@@ -5,6 +5,7 @@ import com.abc_bank.abc_bank.auth_users.dtos.LoginResponse;
 import com.abc_bank.abc_bank.auth_users.dtos.RegistrationRequest;
 import com.abc_bank.abc_bank.auth_users.dtos.ResetPasswordRequest;
 import com.abc_bank.abc_bank.auth_users.dtos.UserDTO;
+import com.abc_bank.abc_bank.auth_users.dtos.VerifyOtpRequest;
 import com.abc_bank.abc_bank.auth_users.services.UserService;
 import com.abc_bank.abc_bank.exceptions.BadRequestException;
 import com.abc_bank.abc_bank.res.Response;
@@ -34,6 +35,19 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<Response<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(userService.loginUser(request));
+    }
+
+    @PostMapping("/login/verify-otp")
+    public ResponseEntity<Response<LoginResponse>> verifyLoginOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        return ResponseEntity.ok(userService.verifyLoginOtp(request));
+    }
+
+    @PostMapping("/login/resend-otp")
+    public ResponseEntity<Response<LoginResponse>> resendLoginOtp(@RequestParam("challengeId") String challengeId) {
+        if (challengeId == null || challengeId.isBlank()) {
+            throw new BadRequestException("challengeId is required");
+        }
+        return ResponseEntity.ok(userService.resendLoginOtp(challengeId));
     }
 
     @PostMapping("/password-reset/request")
