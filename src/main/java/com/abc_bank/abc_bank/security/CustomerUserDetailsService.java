@@ -3,7 +3,6 @@ package com.abc_bank.abc_bank.security;
 
 import com.abc_bank.abc_bank.auth_users.entity.User;
 import com.abc_bank.abc_bank.auth_users.repo.UserRepo;
-import com.abc_bank.abc_bank.exceptions.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,8 +17,10 @@ public class CustomerUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Use the Spring contract type so the provider masks "user not found" as bad credentials
+        // (prevents account enumeration on login).
         User user=userRepo.findByEmail(username)
-                .orElseThrow(()-> new NotFoundException("email not found"));
+                .orElseThrow(()-> new UsernameNotFoundException("invalid email or password"));
         return AuthUser.builder()
                 .user(user)
                 .build();

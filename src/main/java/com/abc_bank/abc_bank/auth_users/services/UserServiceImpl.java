@@ -62,7 +62,8 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("a user with this email already exists");
         }
 
-        List<Role> roles = resolveRoles(request.getRoles());
+        // Public registration always gets the default role; role grants are an admin-only operation.
+        List<Role> roles = resolveRoles(null);
 
         User user = User.builder()
                 .firstName(request.getFirstName())
@@ -161,8 +162,16 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Response<?> requestPasswordReset(String email) {
-        User user = userRepo.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("user not found"));
+        // Always return the same response so the endpoint cannot be used to enumerate accounts.
+        Response<?> genericResponse = Response.builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("if an account exists for that email, a password reset code has been sent")
+                .build();
+
+        User user = userRepo.findByEmail(email).orElse(null);
+        if (user == null) {
+            return genericResponse;
+        }
 
         passwordResetCodeRepo.deleteByUserId(user.getId());
 
@@ -184,10 +193,7 @@ public class UserServiceImpl implements UserService {
                 .build();
         notificationService.sendEmail(notification, user);
 
-        return Response.builder()
-                .statusCode(HttpStatus.OK.value())
-                .message("password reset code sent")
-                .build();
+        return genericResponse;
     }
 
     @Override

@@ -24,7 +24,7 @@ public class TokenService {
     @Value("${jwt.secret.string}")
     private String JWT_SECRETE;
 
-    @Value("${jwt.expirtation.time}")
+    @Value("${jwt.expiration.time}")
     private long EXPIRATION_TIME;
 
     @PostConstruct

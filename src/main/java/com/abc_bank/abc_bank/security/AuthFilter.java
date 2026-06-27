@@ -56,11 +56,9 @@ public class AuthFilter extends OncePerRequestFilter {
             }
 
         }
-        try{
-            filterChain.doFilter(request,response);
-        }catch(Exception e){
-            log.error(e.getMessage());
-        }
+        // Let downstream exceptions propagate so they reach the configured error handling
+        // instead of being swallowed here (which can produce empty/misleading responses).
+        filterChain.doFilter(request, response);
     }
     private String getTokenFromRequest(HttpServletRequest request){
         String tokenWithBearer = request.getHeader("Authorization");
