@@ -3,9 +3,8 @@ package com.abc_bank.abc_bank.auth_users.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 public class RegistrationRequest {
@@ -18,8 +17,7 @@ public class RegistrationRequest {
     @Email
     private String email;
 
-    private List<String> roles;
-
     @NotBlank(message="password is required")
+    @Size(min=8, message="password must be at least 8 characters")
     private String password;
 }
