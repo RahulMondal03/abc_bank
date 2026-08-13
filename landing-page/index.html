@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="VELMORA — Timeless essentials, consciously made. Discover the new season collection.">
+  <title>VELMORA — Timeless Essentials</title>
+  <style>
+    :root {
+      --ink: #1a1714;
+      --ink-soft: #4d463f;
+      --paper: #faf7f2;
+      --paper-warm: #f1ebe1;
+      --accent: #b0713f;
+      --accent-deep: #8a5426;
+      --line: #e2d9cc;
+      --white: #ffffff;
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, .brand {
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+    }
+
+    img, svg { max-width: 100%; display: block; }
+
+    a { color: inherit; text-decoration: none; }
+
+    .container {
+      width: min(1120px, 92%);
+      margin: 0 auto;
+    }
+
+    /* ---------- Announcement bar ---------- */
+    .announce {
+      background: var(--ink);
+      color: var(--paper);
+      text-align: center;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.55rem 1rem;
+    }
+
+    /* ---------- Header ---------- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(250, 247, 242, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.1rem 0;
+    }
+
+    .brand {
+      font-size: 1.5rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.2rem;
+      list-style: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .nav-links a {
+      position: relative;
+      padding-bottom: 4px;
+      color: var(--ink-soft);
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a::after {
+      content: "";
+      position: absolute;
+      left: 0; bottom: 0;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 0.25s ease;
+    }
+
+    .nav-links a:hover { color: var(--ink); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-cta {
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid var(--ink);
+      padding: 0.55rem 1.3rem;
+      border-radius: 999px;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .nav-cta:hover { background: var(--ink); color: var(--paper); }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 3.5rem;
+      align-items: center;
+      padding: 5.5rem 0 6rem;
+    }
+
+    .hero-kicker {
+      display: inline-block;
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+      border: 1px solid var(--line);
+      background: var(--white);
+      border-radius: 999px;
+      padding: 0.4rem 1rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.6rem, 5.2vw, 4.2rem);
+      line-height: 1.12;
+      margin-bottom: 1.4rem;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent-deep);
+    }
+
+    .hero p {
+      color: var(--ink-soft);
+      font-size: 1.08rem;
+      max-width: 46ch;
+      margin-bottom: 2.2rem;
+    }
+
+    .btn-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+    .btn {
+      display: inline-block;
+      padding: 0.95rem 2.1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary { background: var(--ink); color: var(--paper); }
+    .btn-primary:hover { background: var(--accent-deep); }
+
+    .btn-ghost { border: 1px solid var(--ink); color: var(--ink); }
+    .btn-ghost:hover { background: var(--ink); color: var(--paper); }
+
+    .hero-stats {
+      display: flex;
+      gap: 2.5rem;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .hero-stats strong {
+      display: block;
+      font-family: Georgia, serif;
+      font-size: 1.6rem;
+      font-weight: 400;
+    }
+
+    .hero-stats span {
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    .hero-visual {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 30px 60px -30px rgba(26, 23, 20, 0.35);
+    }
+
+    .hero-visual svg { width: 100%; height: auto; }
+
+    .hero-tag {
+      position: absolute;
+      left: 1.2rem;
+      bottom: 1.2rem;
+      background: rgba(250, 247, 242, 0.94);
+      border-radius: 10px;
+      padding: 0.7rem 1.1rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+    }
+
+    .hero-tag strong { display: block; font-size: 0.92rem; }
+
+    /* ---------- Section scaffolding ---------- */
+    section { padding: 5rem 0; }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 2rem;
+      margin-bottom: 2.8rem;
+    }
+
+    .section-head h2 {
+      font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+      line-height: 1.2;
+    }
+
+    .section-head p {
+      color: var(--ink-soft);
+      max-width: 42ch;
+    }
+
+    .eyebrow {
+      display: block;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+      margin-bottom: 0.7rem;
+    }
+
+    /* ---------- Collection grid ---------- */
+    .grid-products {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.6rem;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 24px 40px -28px rgba(26, 23, 20, 0.35);
+    }
+
+    .card svg { width: 100%; height: auto; }
+
+    .card-body { padding: 1.1rem 1.2rem 1.3rem; }
+
+    .card-body h3 { font-size: 1.05rem; margin-bottom: 0.15rem; }
+
+    .card-body .muted {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin-bottom: 0.6rem;
+    }
+
+    .price { font-weight: 600; letter-spacing: 0.02em; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: var(--paper-warm);
+      color: var(--accent-deep);
+      border-radius: 999px;
+      padding: 0.25rem 0.7rem;
+      margin-bottom: 0.6rem;
+    }
+
+    /* ---------- Story ---------- */
+    .story {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .story-inner {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .story .eyebrow { color: #d9a06b; }
+
+    .story h2 { font-size: clamp(1.9rem, 3.4vw, 2.6rem); margin-bottom: 1.2rem; }
+
+    .story p { color: #c9c2b8; margin-bottom: 1.1rem; }
+
+    .story-values {
+      list-style: none;
+      margin-top: 1.8rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .story-values li {
+      display: flex;
+      gap: 0.9rem;
+      align-items: baseline;
+      color: #e8e2d8;
+    }
+
+    .story-values li::before {
+      content: "—";
+      color: #d9a06b;
+      flex-shrink: 0;
+    }
+
+    .story-visual {
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    /* ---------- Testimonials ---------- */
+    .grid-quotes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.6rem;
+    }
+
+    .quote {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.8rem;
+    }
+
+    .quote .stars { color: var(--accent); letter-spacing: 0.2em; margin-bottom: 0.9rem; }
+
+    .quote p {
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-size: 1.02rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .quote footer {
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+    }
+
+    /* ---------- Newsletter ---------- */
+    .newsletter {
+      background: var(--paper-warm);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+    }
+
+    .newsletter h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); margin-bottom: 0.8rem; }
+
+    .newsletter p { color: var(--ink-soft); max-width: 52ch; margin: 0 auto 2rem; }
+
+    .newsletter form {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .newsletter input {
+      font: inherit;
+      padding: 0.95rem 1.4rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      width: min(360px, 100%);
+      background: var(--white);
+      color: var(--ink);
+    }
+
+    .newsletter input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: transparent;
+    }
+
+    .newsletter .btn-primary { border: none; cursor: pointer; font: inherit; font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; }
+
+    .fine-print { font-size: 0.75rem; color: var(--ink-soft); margin-top: 1rem; }
+
+    /* ---------- Footer ---------- */
+    .site-footer {
+      padding: 3.5rem 0 2.5rem;
+      color: var(--ink-soft);
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 2.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .site-footer .brand { color: var(--ink); font-size: 1.2rem; margin-bottom: 0.8rem; }
+
+    .site-footer h4 {
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink);
+      margin-bottom: 0.9rem;
+    }
+
+    .site-footer ul { list-style: none; display: grid; gap: 0.5rem; font-size: 0.9rem; }
+
+    .site-footer ul a:hover { color: var(--accent-deep); }
+
+    .footer-bottom {
+      border-top: 1px solid var(--line);
+      padding-top: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; padding: 3.5rem 0 4rem; }
+      .grid-products { grid-template-columns: repeat(2, 1fr); }
+      .story-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+      .grid-quotes { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+      .section-head { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 540px) {
+      .grid-products { grid-template-columns: 1fr; }
+      .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="announce">Complimentary shipping on orders over $120 &nbsp;·&nbsp; New season arrivals in store</div>
+
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#top">Velmora</a>
+      <ul class="nav-links">
+        <li><a href="#collection">Collection</a></li>
+        <li><a href="#story">Our Story</a></li>
+        <li><a href="#reviews">Reviews</a></li>
+        <li><a href="#newsletter">Journal</a></li>
+      </ul>
+      <a class="nav-cta" href="#collection">Shop Now</a>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- Hero -->
+    <div class="container hero">
+      <div>
+        <span class="hero-kicker">Autumn / Winter ’26 Collection</span>
+        <h1>Timeless essentials, <em>consciously</em> made.</h1>
+        <p>Velmora crafts elevated wardrobe staples from natural fibres — cut to last for decades, not seasons. Small-batch production, fully traceable supply chain, honest prices.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="#collection">Explore the Collection</a>
+          <a class="btn btn-ghost" href="#story">Our Story</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>100%</strong><span>Natural fibres</span></div>
+          <div><strong>12k+</strong><span>Happy customers</span></div>
+          <div><strong>4.9★</strong><span>Average rating</span></div>
+        </div>
+      </div>
+
+      <figure class="hero-visual" aria-label="Model wearing the Velmora camel overcoat">
+        <svg viewBox="0 0 520 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+          <defs>
+            <linearGradient id="heroBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e8ddcc"/>
+              <stop offset="1" stop-color="#cdb99f"/>
+            </linearGradient>
+            <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#b0713f"/>
+              <stop offset="1" stop-color="#8a5426"/>
+            </linearGradient>
+          </defs>
+          <rect width="520" height="620" fill="url(#heroBg)"/>
+          <circle cx="420" cy="90" r="130" fill="#f1ebe1" opacity="0.5"/>
+          <!-- stylised figure in overcoat -->
+          <circle cx="260" cy="150" r="46" fill="#3a2f26"/>
+          <path d="M260 196 C 190 210 168 270 162 340 L 150 560 L 218 560 L 232 400 L 244 560 L 276 560 L 288 400 L 302 560 L 370 560 L 358 340 C 352 270 330 210 260 196 Z" fill="url(#coat)"/>
+          <path d="M260 196 L 236 250 L 260 380 L 284 250 Z" fill="#f1ebe1"/>
+          <path d="M232 208 L 260 380 L 288 208 L 296 216 L 262 402 L 224 216 Z" fill="#7a4a20"/>
+          <rect x="180" y="560" width="200" height="14" rx="7" fill="#3a2f26" opacity="0.25"/>
+        </svg>
+        <figcaption class="hero-tag">
+          <strong>The Meridian Overcoat</strong>
+          Italian wool · $289
+        </figcaption>
+      </figure>
+    </div>
+
+    <!-- Collection -->
+    <section id="collection">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">New Arrivals</span>
+            <h2>The Autumn Edit</h2>
+          </div>
+          <p>Four pieces, endless combinations. Every garment is designed in-house and made in certified European ateliers.</p>
+        </div>
+
+        <div class="grid-products">
+          <article class="card">
+            <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="300" height="300" fill="#e8ddcc"/>
+              <path d="M150 60 L110 78 L84 100 L96 168 L112 160 L112 250 L188 250 L188 160 L204 168 L216 100 L190 78 Z" fill="#4b5d52"/>
+              <path d="M150 60 L136 66 A20 20 0 0 0 164 66 Z" fill="#37473e"/>
+            </svg>
+            <div class="card-body">
+              <span class="badge">Bestseller</span>
+              <h3>The Harbor Knit</h3>
+              <p class="muted">Merino wool · Forest green</p>
+              <span class="price">$128</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="300" height="300" fill="#efe6d7"/>
+              <path d="M118 60 L100 250 L142 250 L150 130 L158 250 L200 250 L182 60 Z" fill="#8c7a5e"/>
+              <rect x="112" y="56" width="76" height="12" rx="6" fill="#6f5f47"/>
+            </svg>
+            <div class="card-body">
+              <span class="badge">New</span>
+              <h3>The Atlas Trouser</h3>
+              <p class="muted">Organic cotton twill · Taupe</p>
+              <span class="price">$96</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="300" height="300" fill="#e3d9c6"/>
+              <path d="M150 58 L104 76 L78 102 L92 176 L108 168 L104 252 L196 252 L192 168 L208 176 L222 102 L196 76 Z" fill="#f5f0e6"/>
+              <path d="M150 58 L134 64 L150 96 L166 64 Z" fill="#dcd2bd"/>
+              <rect x="146" y="96" width="8" height="156" fill="#dcd2bd"/>
+            </svg>
+            <div class="card-body">
+              <span class="badge">Essential</span>
+              <h3>The Studio Shirt</h3>
+              <p class="muted">Brushed linen · Ecru</p>
+              <span class="price">$84</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect width="300" height="300" fill="#ded3c0"/>
+              <path d="M150 54 L100 74 L72 104 L90 182 L106 172 L106 254 L194 254 L194 172 L210 182 L228 104 L200 74 Z" fill="#b0713f"/>
+              <path d="M150 54 L128 62 L150 110 L172 62 Z" fill="#8a5426"/>
+              <rect x="120" y="200" width="26" height="30" rx="4" fill="#8a5426"/>
+              <rect x="154" y="200" width="26" height="30" rx="4" fill="#8a5426"/>
+            </svg>
+            <div class="card-body">
+              <span class="badge">Limited</span>
+              <h3>The Meridian Overcoat</h3>
+              <p class="muted">Italian wool · Camel</p>
+              <span class="price">$289</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story -->
+    <section class="story" id="story">
+      <div class="container story-inner">
+        <div>
+          <span class="eyebrow">Our Story</span>
+          <h2>Slow fashion, built on three promises.</h2>
+          <p>We started Velmora with a simple frustration: good clothes shouldn’t fall apart, and honest clothes shouldn’t cost a fortune. So we cut out the middlemen, partnered directly with family-run mills, and publish the true cost of every garment we make.</p>
+          <ul class="story-values">
+            <li><span><strong>Traceable.</strong> Every piece lists its mill, its maker, and its journey.</span></li>
+            <li><span><strong>Durable.</strong> Reinforced seams and natural fibres, guaranteed for five years.</span></li>
+            <li><span><strong>Circular.</strong> Send any Velmora piece back — we repair it or recycle it, free.</span></li>
+          </ul>
+        </div>
+        <figure class="story-visual" aria-label="Fabric rolls in the Velmora atelier">
+          <svg viewBox="0 0 520 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="520" height="420" fill="#2a241e"/>
+            <ellipse cx="120" cy="330" rx="70" ry="70" fill="#b0713f"/>
+            <rect x="50" y="120" width="140" height="210" fill="#b0713f"/>
+            <ellipse cx="120" cy="120" rx="70" ry="24" fill="#d9a06b"/>
+            <ellipse cx="270" cy="340" rx="60" ry="60" fill="#4b5d52"/>
+            <rect x="210" y="160" width="120" height="180" fill="#4b5d52"/>
+            <ellipse cx="270" cy="160" rx="60" ry="20" fill="#6d8276"/>
+            <ellipse cx="405" cy="350" rx="55" ry="50" fill="#f1ebe1"/>
+            <rect x="350" y="200" width="110" height="150" fill="#f1ebe1"/>
+            <ellipse cx="405" cy="200" rx="55" ry="18" fill="#d9cfba"/>
+          </svg>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section id="reviews">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Reviews</span>
+            <h2>Loved by people who buy less, better.</h2>
+          </div>
+        </div>
+        <div class="grid-quotes">
+          <blockquote class="quote">
+            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <p>“Three winters in and my Meridian coat still looks brand new. The five-year guarantee sold me; the quality keeps me.”</p>
+            <footer>Amara O. — Copenhagen</footer>
+          </blockquote>
+          <blockquote class="quote">
+            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <p>“I replaced half my wardrobe with six Velmora pieces. Everything matches everything. Getting dressed is finally simple.”</p>
+            <footer>Jules R. — Melbourne</footer>
+          </blockquote>
+          <blockquote class="quote">
+            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
+            <p>“The cost breakdown on every product page is refreshingly honest. This is what transparency actually looks like.”</p>
+            <footer>Priya S. — Toronto</footer>
+          </blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- Newsletter -->
+    <section class="newsletter" id="newsletter">
+      <div class="container">
+        <span class="eyebrow">The Journal</span>
+        <h2>First access. No noise.</h2>
+        <p>One email a month: new drops, restocks, and care guides that make your clothes last longer. Unsubscribe anytime.</p>
+        <form onsubmit="event.preventDefault(); this.querySelector('input').value=''; alert('Thanks for subscribing!');">
+          <input type="email" placeholder="Your email address" aria-label="Email address" required>
+          <button class="btn btn-primary" type="submit">Subscribe</button>
+        </form>
+        <p class="fine-print">By subscribing you agree to our privacy policy. We never share your data.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <p class="brand">Velmora</p>
+          <p>Timeless essentials, consciously made.<br>Designed in Copenhagen. Made in Europe.</p>
+        </div>
+        <div>
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="#collection">New Arrivals</a></li>
+            <li><a href="#collection">Knitwear</a></li>
+            <li><a href="#collection">Outerwear</a></li>
+            <li><a href="#collection">Essentials</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#story">Our Story</a></li>
+            <li><a href="#story">Sustainability</a></li>
+            <li><a href="#newsletter">Journal</a></li>
+            <li><a href="#reviews">Reviews</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li><a href="#">Shipping &amp; Returns</a></li>
+            <li><a href="#">Size Guide</a></li>
+            <li><a href="#">Repairs &amp; Recycling</a></li>
+            <li><a href="#">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Velmora. All rights reserved.</span>
+        <span>Privacy · Terms · Cookies</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
