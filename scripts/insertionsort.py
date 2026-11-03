@@ -1,10 +1,12 @@
 """Insertion sort implementation.
 
 Usage:
-    python insertionsort.py 5 2 9 1 5 6
+    python scripts/insertionsort.py 5 2 9 1 5 6
 """
 
 import sys
+
+from input_validation import InputValidator
 
 
 def insertion_sort(items):
@@ -29,7 +31,7 @@ def main(argv):
         print(__doc__.strip())
         return 1
     try:
-        numbers = [float(x) if "." in x else int(x) for x in argv[1:]]
+        numbers = InputValidator.parse_numbers(argv[1:])
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1

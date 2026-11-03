@@ -1,29 +1,6 @@
 """Utility for summing the even numbers in a sequence."""
 
-import math
-from numbers import Real
-
-
-def _to_integer(value, index):
-    """Return ``value`` as an ``int``, or raise explaining why it is not one.
-
-    Raises:
-        TypeError: If ``value`` is not a real number.
-        ValueError: If ``value`` is a number but has no exact integer value.
-    """
-    if isinstance(value, bool) or not isinstance(value, Real):
-        raise TypeError(
-            f"item at index {index} is not a real number: {value!r}"
-        )
-    if not math.isfinite(value):
-        raise ValueError(
-            f"item at index {index} is not a finite number: {value!r}"
-        )
-    if value != int(value):
-        raise ValueError(
-            f"item at index {index} is not an integer: {value!r}"
-        )
-    return int(value)
+from input_validation import InputValidator
 
 
 def sum_even_numbers(numbers, skip_invalid=False):
@@ -50,21 +27,14 @@ def sum_even_numbers(numbers, skip_invalid=False):
         ValueError: If ``skip_invalid`` is ``False`` and an item is a
             number with no exact integer value.
     """
-    if isinstance(numbers, (str, bytes, bytearray)):
-        raise TypeError(
-            f"expected an iterable of numbers, got {type(numbers).__name__}"
-        )
-    try:
-        items = enumerate(numbers)
-    except TypeError:
-        raise TypeError(
-            f"expected an iterable of numbers, got {type(numbers).__name__}"
-        ) from None
+    InputValidator.require_iterable(numbers, "numbers")
 
     total = 0
-    for index, value in items:
+    for index, value in enumerate(numbers):
         try:
-            number = _to_integer(value, index)
+            number = InputValidator.require_integer(
+                value, f"item at index {index}"
+            )
         except (TypeError, ValueError):
             if skip_invalid:
                 continue
